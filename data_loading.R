@@ -7,20 +7,26 @@ registerDoParallel()
 data.dir <- 'C:\\Users\\lucas\\Documents\\Job\\DataScience\\facial_recognition\\facial-keypoints-detection\\'
 train.file <- paste0(data.dir, 'training.csv')
 test.file  <- paste0(data.dir, 'test.csv')
-d.train <- read.csv(train.file, stringsAsFactors=F)
 
 # Transform data
-im.train      <- d.train$Image
-d.train$Image <- NULL
-im.train <- foreach(im = im.train, .combine=rbind) %dopar% {
+d  <- read.csv(train.file, stringsAsFactors=F)
+im <- foreach(im = d$Image, .combine=rbind) %dopar% {
     as.integer(unlist(strsplit(im, " ")))
 }
-
-d.test  <- read.csv(test.file, stringsAsFactors=F)
-im.test <- foreach(im = d.test$Image, .combine=rbind) %dopar% {
+d_submission  <- read.csv(test.file, stringsAsFactors=F)
+im_submission <- foreach(im = d_submission$Image, .combine=rbind) %dopar% {
     as.integer(unlist(strsplit(im, " ")))
 }
-d.test$Image <- NULL
+d$Image <- NULL
+d_submission$Image <- NULL
+set.seed(0)
+idxs     <- sample(nrow(d), nrow(d)*0.8)
+d.train  <- d[idxs, ]
+d.test   <- d[-idxs, ]
+im.train <- im[idxs,]
+im.test  <- im[-idxs,]
+rm("d", "im")
 
 # Save data
-save(d.train, im.train, d.test, im.test, file='data.Rd')
+save(d.train, im.train, d.test, im.test, file='data.RData')
+save(d_submission, im_submission, file='data_submission.RData')
