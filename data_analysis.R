@@ -7,10 +7,8 @@ install.packages("foreach")
 library(foreach)
 install.packages("doParallel")
 library(doParallel)
-if (!require(devtools))
-  install.packages("devtools")
-devtools::install_github("swarm-lab/Rvision")
 library(Rvision)
+library(keras)
 
 # Create path and load data in a data frame
 data.dir <- 'C:\\Users\\lucas\\Documents\\Job\\DataScience\\facial_recognition\\facial-keypoints-detection\\'
@@ -24,6 +22,31 @@ cl <- makeCluster(8)  # Number of cores to use
 registerDoParallel(cl)
 
 ########IMPLEMENT ALGO BY MYSELF
+
+########TO REMOVE
+# create model
+model <-keras_model_sequential()
+
+# Create layers of neural network
+model %>%
+  #CNN part
+  layer_conv_2d(filter=32,kernel_size=c(3,3),padding="same",input_shape=c(30,1) ) %>%  
+  layer_activation("relu") %>%  
+  layer_conv_2d(filter=32 ,kernel_size=c(3,3))  %>%  
+  layer_activation("relu") %>%
+  layer_max_pooling_2d(pool_size = c(2,2)) %>%
+#Neural-net part 
+  layer_flatten() %>% 
+  layer_dense(1024) %>%
+  layer_activation("relu") %>% 
+  layer_dense(128) %>% 
+  layer_activation("relu") %>% 
+  layer_dropout(0.3) %>% 
+  layer_dense(40) %>% 
+  layer_activation("softmax")
+
+opt<-optimizer_adam( learning_rate= 0.0001)
+compile(model,optimizer = opt, loss = 'categorical_crossentropy' )
 
 # for each one, compute the average patch
 patch_size  <- 10
@@ -100,6 +123,7 @@ p <- foreach(coord_i = 1:length(coordinate.names), .combine=cbind, .packages='do
 	}
 	names(r) <- c(coord_x, coord_y)
 }
+#########
 
 # Stop the parallel backend
 stopCluster(cl)
